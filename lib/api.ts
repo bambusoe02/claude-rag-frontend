@@ -1,4 +1,14 @@
+import { retryWithBackoff } from './retry';
+import { API_TIMEOUT, API_MAX_RETRIES } from '@/constants';
+
+// Validate environment variable
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+if (typeof window === 'undefined' && !process.env.NEXT_PUBLIC_API_URL) {
+  console.warn(
+    'NEXT_PUBLIC_API_URL is not set. Using default: http://localhost:8000'
+  );
+}
 
 export interface ChatRequest {
   message: string;
@@ -46,19 +56,47 @@ export interface StatsResponse {
 
 class ApiClient {
   private baseUrl: string;
+  private timeout: number;
 
-  constructor(baseUrl: string = API_URL) {
+  constructor(baseUrl: string = API_URL, timeout: number = 30000) {
     this.baseUrl = baseUrl;
+    this.timeout = timeout;
+  }
+
+  private async fetchWithTimeout(
+    url: string,
+    options: RequestInit
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${this.timeout}ms`);
+      }
+      throw error;
+    }
   }
 
   async chat(request: ChatRequest): Promise<ChatResponse> {
-    const response = await fetch(`${this.baseUrl}/api/chat/message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
+    const response = await this.fetchWithTimeout(
+      `${this.baseUrl}/api/chat/message`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
@@ -72,10 +110,13 @@ class ApiClient {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${this.baseUrl}/api/upload/document`, {
-      method: 'POST',
-      body: formData,
-    });
+    const response = await this.fetchWithTimeout(
+      `${this.baseUrl}/api/upload/document`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
@@ -86,12 +127,15 @@ class ApiClient {
   }
 
   async listDocuments(): Promise<DocumentsListResponse> {
-    const response = await fetch(`${this.baseUrl}/api/documents/list`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await this.fetchWithTimeout(
+      `${this.baseUrl}/api/documents/list`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
@@ -102,12 +146,15 @@ class ApiClient {
   }
 
   async getStats(): Promise<StatsResponse> {
-    const response = await fetch(`${this.baseUrl}/api/documents/stats`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await this.fetchWithTimeout(
+      `${this.baseUrl}/api/documents/stats`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
@@ -118,9 +165,12 @@ class ApiClient {
   }
 
   async deleteDocument(docId: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/api/documents/${docId}`, {
-      method: 'DELETE',
-    });
+    const response = await this.fetchWithTimeout(
+      `${this.baseUrl}/api/documents/${docId}`,
+      {
+        method: 'DELETE',
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
@@ -129,7 +179,9 @@ class ApiClient {
   }
 
   async healthCheck(): Promise<{ status: string }> {
-    const response = await fetch(`${this.baseUrl}/health`);
+    const response = await this.fetchWithTimeout(`${this.baseUrl}/health`, {
+      method: 'GET',
+    });
     if (!response.ok) {
       throw new Error('Backend is not available');
     }
@@ -137,5 +189,61 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient();
+// Create API client with timeout
+const baseClient = new ApiClient(API_URL, API_TIMEOUT);
+
+// Wrap API methods with retry logic
+export const apiClient = {
+  chat: (request: ChatRequest) =>
+    retryWithBackoff(
+      () => baseClient.chat(request),
+      {
+        maxRetries: API_MAX_RETRIES,
+        onRetry: (attempt, error) => {
+          if (typeof window !== 'undefined') {
+            console.warn(`Chat API retry ${attempt}/${API_MAX_RETRIES}:`, error.message);
+          }
+        },
+      }
+    ),
+
+  uploadDocument: (file: File) =>
+    retryWithBackoff(
+      () => baseClient.uploadDocument(file),
+      {
+        maxRetries: API_MAX_RETRIES,
+        onRetry: (attempt, error) => {
+          if (typeof window !== 'undefined') {
+            console.warn(`Upload API retry ${attempt}/${API_MAX_RETRIES}:`, error.message);
+          }
+        },
+      }
+    ),
+
+  listDocuments: () =>
+    retryWithBackoff(
+      () => baseClient.listDocuments(),
+      {
+        maxRetries: API_MAX_RETRIES,
+      }
+    ),
+
+  getStats: () =>
+    retryWithBackoff(
+      () => baseClient.getStats(),
+      {
+        maxRetries: API_MAX_RETRIES,
+      }
+    ),
+
+  deleteDocument: (docId: string) =>
+    retryWithBackoff(
+      () => baseClient.deleteDocument(docId),
+      {
+        maxRetries: API_MAX_RETRIES,
+      }
+    ),
+
+  healthCheck: () => baseClient.healthCheck(),
+};
 

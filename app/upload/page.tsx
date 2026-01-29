@@ -4,6 +4,12 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { apiClient } from '@/lib/api';
+import {
+  MAX_FILE_SIZE,
+  ALLOWED_EXTENSIONS,
+  ALLOWED_MIME_TYPES,
+  UPLOAD_STATUS_TIMEOUT,
+} from '@/constants';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -50,30 +56,22 @@ export default function UploadPage() {
   );
 
   const handleFile = async (file: File) => {
-    const allowedTypes = [
-      'application/pdf',
-      'text/plain',
-      'text/markdown',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
-    const allowedExtensions = ['.pdf', '.txt', '.md', '.docx'];
-
     const isValidType =
-      allowedTypes.includes(file.type) ||
-      allowedExtensions.some((ext) => file.name.toLowerCase().endsWith(ext));
+      ALLOWED_MIME_TYPES.includes(file.type) ||
+      ALLOWED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
 
     if (!isValidType) {
       setUploadStatus({
         type: 'error',
-        message: `Invalid file type. Allowed: PDF, TXT, MD, DOCX`,
+        message: `Invalid file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ').toUpperCase()}`,
       });
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > MAX_FILE_SIZE) {
       setUploadStatus({
         type: 'error',
-        message: 'File size must be less than 10MB',
+        message: `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`,
       });
       return;
     }
@@ -87,10 +85,10 @@ export default function UploadPage() {
         type: 'success',
         message: `Successfully uploaded ${response.filename}. Created ${response.chunks} chunks.`,
       });
-      // Clear status after 3 seconds
+      // Clear status after timeout
       setTimeout(() => {
         setUploadStatus({ type: null, message: '' });
-      }, 3000);
+      }, UPLOAD_STATUS_TIMEOUT);
     } catch (error) {
       setUploadStatus({
         type: 'error',

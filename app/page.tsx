@@ -62,7 +62,7 @@ export default function Home() {
       setConversationId(response.conversation_id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get response');
-      console.error('Chat error:', err);
+      // Error is already displayed to user via setError
     } finally {
       setLoading(false);
     }
