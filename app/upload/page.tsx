@@ -107,7 +107,7 @@ export default function UploadPage() {
             Upload Documents
           </h1>
           <nav className="flex gap-4">
-            <Link href="/">
+            <Link href="/chat">
               <Button variant="outline" size="sm">
                 Chat
               </Button>

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiClient, Document, StatsResponse } from '@/lib/api';
 import Link from 'next/link';
+import { Trash2 } from 'lucide-react';
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -34,6 +35,27 @@ export default function DocumentsPage() {
     fetchData();
   }, []);
 
+  const handleDelete = async (doc: Document) => {
+    if (!doc.doc_id) {
+      setError('Document ID not available. Cannot delete.');
+      return;
+    }
+
+    if (!confirm(`Delete "${doc.filename}"? This will remove all ${doc.chunks} chunks. This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await apiClient.deleteDocument(doc.doc_id);
+      // Refresh document list
+      await fetchData();
+      // Show success message
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete document');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-slate-900/80">
@@ -42,7 +64,7 @@ export default function DocumentsPage() {
             Documents
           </h1>
           <nav className="flex gap-4">
-            <Link href="/">
+            <Link href="/chat">
               <Button variant="outline" size="sm">
                 Chat
               </Button>
@@ -131,6 +153,17 @@ export default function DocumentsPage() {
                         </span>
                       </div>
                     </div>
+                    {doc.doc_id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(doc)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10 ml-4"
+                        title="Delete document"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </Card>
               ))}

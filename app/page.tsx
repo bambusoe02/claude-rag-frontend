@@ -1,199 +1,219 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { apiClient, ChatResponse, Source } from '@/lib/api';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { MessageSquare, Upload, CheckCircle2, FileText, Sparkles, Shield } from 'lucide-react';
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  sources?: Source[];
-  timestamp: Date;
-}
-
-export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
-
-    const userMessage: Message = {
-      role: 'user',
-      content: input,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response: ChatResponse = await apiClient.chat({
-        message: input,
-        conversation_id: conversationId || undefined,
-      });
-
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: response.response,
-        sources: response.sources,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-      setConversationId(response.conversation_id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get response');
-      // Error is already displayed to user via setError
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
+export default function LandingPage() {
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-slate-900/80">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">
-            Claude RAG Chatbot
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+      
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-20 md:py-32">
+        <div className="text-center max-w-4xl mx-auto">
+          
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full mb-8">
+            <Sparkles className="w-4 h-4 text-purple-400" />
+            <span className="text-sm text-purple-300">Powered by Claude Sonnet 4</span>
+          </div>
+          
+          {/* Headline */}
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+              Chat with Your Documents
+            </span>
           </h1>
-          <nav className="flex gap-4">
+          
+          {/* Subheadline */}
+          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            Upload PDFs, TXT, Markdown, or Word docs. Ask questions. 
+            Get accurate answers with transparent source citations.
+          </p>
+          
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Link href="/chat">
+              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white text-lg px-8 py-6 w-full sm:w-auto">
+                <MessageSquare className="w-5 h-5 mr-2" />
+                Start Chatting
+              </Button>
+            </Link>
+            
             <Link href="/upload">
-              <Button variant="outline" size="sm">
-                Upload
+              <Button size="lg" variant="outline" className="border-gray-700 hover:bg-gray-800 text-lg px-8 py-6 w-full sm:w-auto">
+                <Upload className="w-5 h-5 mr-2" />
+                Upload Documents
               </Button>
             </Link>
-            <Link href="/documents">
-              <Button variant="outline" size="sm">
-                Documents
-              </Button>
-            </Link>
-          </nav>
+          </div>
+          
+          {/* Trust Badge */}
+          <p className="text-sm text-gray-500">
+            🔒 Your documents stay private • No account required • Free to use
+          </p>
+          
         </div>
-      </header>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto max-w-4xl px-4 py-6">
-          {messages.length === 0 ? (
-            <div className="flex h-full items-center justify-center">
-              <div className="text-center">
-                <h2 className="mb-2 text-2xl font-semibold text-slate-900 dark:text-slate-50">
-                  Welcome to Claude RAG Chatbot
-                </h2>
-                <p className="text-slate-600 dark:text-slate-400">
-                  Ask questions about your uploaded documents. Start by uploading some documents
-                  from the Upload page.
+      </section>
+      
+      {/* Features Grid */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          
+          {/* Feature 1 */}
+          <div className="group bg-gray-900/50 backdrop-blur border border-gray-800 hover:border-purple-500/50 rounded-xl p-8 transition-all">
+            <div className="w-14 h-14 bg-purple-500/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-purple-500/20 transition-all">
+              <Upload className="w-7 h-7 text-purple-400" />
+            </div>
+            <h3 className="text-xl font-bold mb-3 text-white">Multi-Format Support</h3>
+            <p className="text-gray-400 leading-relaxed">
+              Upload PDF, TXT, Markdown, and Word documents. 
+              Automatic processing with intelligent chunking for optimal context.
+            </p>
+          </div>
+          
+          {/* Feature 2 */}
+          <div className="group bg-gray-900/50 backdrop-blur border border-gray-800 hover:border-cyan-500/50 rounded-xl p-8 transition-all">
+            <div className="w-14 h-14 bg-cyan-500/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-cyan-500/20 transition-all">
+              <MessageSquare className="w-7 h-7 text-cyan-400" />
+            </div>
+            <h3 className="text-xl font-bold mb-3 text-white">Natural Conversations</h3>
+            <p className="text-gray-400 leading-relaxed">
+              Ask questions in plain English. Claude Sonnet 4 understands context 
+              and provides accurate, detailed answers.
+            </p>
+          </div>
+          
+          {/* Feature 3 */}
+          <div className="group bg-gray-900/50 backdrop-blur border border-gray-800 hover:border-green-500/50 rounded-xl p-8 transition-all">
+            <div className="w-14 h-14 bg-green-500/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-green-500/20 transition-all">
+              <CheckCircle2 className="w-7 h-7 text-green-400" />
+            </div>
+            <h3 className="text-xl font-bold mb-3 text-white">Source Citations</h3>
+            <p className="text-gray-400 leading-relaxed">
+              Every answer includes references to source documents. 
+              Click to view exact quotes. Transparent and verifiable.
+            </p>
+          </div>
+          
+        </div>
+      </section>
+      
+      {/* How It Works */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="max-w-4xl mx-auto">
+          
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+              How It Works
+            </h2>
+            <p className="text-xl text-gray-400">
+              Three simple steps to start chatting with your documents
+            </p>
+          </div>
+          
+          <div className="space-y-12">
+            
+            {/* Step 1 */}
+            <div className="flex items-start gap-6">
+              <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center text-white text-2xl font-bold">
+                1
+              </div>
+              <div className="flex-1 pt-2">
+                <h3 className="text-2xl font-bold mb-3 text-white">Upload Your Documents</h3>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                  Drag and drop your files or click to browse. We support PDF, TXT, 
+                  Markdown, and Word documents. Your files are processed instantly 
+                  and stored securely in a vector database for fast retrieval.
                 </p>
               </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  <Card
-                    className={`max-w-[80%] p-4 ${
-                      message.role === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-white dark:bg-slate-800'
-                    }`}
-                  >
-                    <div className="whitespace-pre-wrap">{message.content}</div>
-                    {message.sources && message.sources.length > 0 && (
-                      <div className="mt-3 border-t pt-3">
-                        <p className="mb-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
-                          Sources:
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {message.sources.map((source, idx) => (
-                            <Badge
-                              key={idx}
-                              variant="secondary"
-                              className="cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
-                              title={source.text}
-                            >
-                              {source.filename}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </Card>
-                </div>
-              ))}
-              {loading && (
-                <div className="flex justify-start">
-                  <Card className="bg-white p-4 dark:bg-slate-800">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 animate-pulse rounded-full bg-slate-400"></div>
-                      <div className="h-2 w-2 animate-pulse rounded-full bg-slate-400 [animation-delay:0.2s]"></div>
-                      <div className="h-2 w-2 animate-pulse rounded-full bg-slate-400 [animation-delay:0.4s]"></div>
-                    </div>
-                  </Card>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
+            
+            {/* Step 2 */}
+            <div className="flex items-start gap-6">
+              <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-cyan-600 to-cyan-800 flex items-center justify-center text-white text-2xl font-bold">
+                2
+              </div>
+              <div className="flex-1 pt-2">
+                <h3 className="text-2xl font-bold mb-3 text-white">Ask Questions</h3>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                  Type your question naturally, just like you're talking to a colleague. 
+                  Our semantic search finds the most relevant sections from your documents, 
+                  and Claude provides context-aware answers.
+                </p>
+              </div>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Error message */}
-      {error && (
-        <div className="border-t bg-red-50 px-4 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
-          Error: {error}
-        </div>
-      )}
-
-      {/* Input */}
-      <div className="border-t bg-white/80 backdrop-blur-sm dark:bg-slate-900/80">
-        <div className="container mx-auto max-w-4xl px-4 py-4">
-          <div className="flex gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask a question about your documents..."
-              className="min-h-[60px] resize-none"
-              disabled={loading}
-            />
-            <Button onClick={handleSend} disabled={loading || !input.trim()}>
-              Send
-            </Button>
+            
+            {/* Step 3 */}
+            <div className="flex items-start gap-6">
+              <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center text-white text-2xl font-bold">
+                3
+              </div>
+              <div className="flex-1 pt-2">
+                <h3 className="text-2xl font-bold mb-3 text-white">Get Cited Answers</h3>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                  Receive accurate answers with source citations. Every response includes 
+                  references you can click to verify. See exactly where the information 
+                  came from and build trust in the AI's responses.
+                </p>
+              </div>
+            </div>
+            
           </div>
         </div>
-      </div>
+      </section>
+      
+      {/* Tech Stack */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-8 text-white">
+            Built with Best-in-Class Technology
+          </h2>
+          <div className="flex flex-wrap justify-center gap-4">
+            {[
+              'Claude Sonnet 4',
+              'FastAPI',
+              'Next.js 15',
+              'ChromaDB',
+              'TypeScript',
+              'OpenAI Embeddings'
+            ].map((tech) => (
+              <div
+                key={tech}
+                className="px-6 py-3 bg-gray-900/80 border border-gray-800 rounded-full text-gray-300 hover:border-purple-500/50 transition-all"
+              >
+                {tech}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      
+      {/* Final CTA */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="max-w-3xl mx-auto text-center bg-gradient-to-r from-purple-900/20 to-cyan-900/20 border border-purple-500/20 rounded-2xl p-12">
+          <h2 className="text-4xl font-bold mb-6 text-white">
+            Ready to Chat with Your Documents?
+          </h2>
+          <p className="text-xl text-gray-300 mb-8">
+            No signup required. Start asking questions in seconds.
+          </p>
+          <Link href="/chat">
+            <Button size="lg" className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white text-lg px-12 py-6">
+              <MessageSquare className="w-5 h-5 mr-2" />
+              Get Started Now →
+            </Button>
+          </Link>
+        </div>
+      </section>
+      
+      {/* Footer */}
+      <footer className="container mx-auto px-4 py-8 border-t border-gray-800">
+        <div className="text-center text-gray-500 text-sm">
+          <p>Built with ❤️ using Claude Sonnet 4 • Open Source</p>
+        </div>
+      </footer>
+      
     </div>
   );
 }

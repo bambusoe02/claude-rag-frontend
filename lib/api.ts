@@ -31,6 +31,7 @@ export interface Document {
   filename: string;
   file_type: string;
   chunks: number;
+  doc_id?: string;
 }
 
 export interface UploadResponse {
