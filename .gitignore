@@ -4,3 +4,14 @@ out/
 .env*.local
 .DS_Store
 *.log
+
+# Audit reports and additional documentation (keep local only)
+*_AUDIT*.md
+*AUDIT*.md
+*_REPORT*.md
+*REPORT*.md
+*_FIX*.md
+*FIX*.md
+*_STATUS*.md
+*STATUS*.md
+COMPREHENSIVE_*.md
