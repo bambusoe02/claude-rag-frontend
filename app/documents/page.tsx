@@ -15,16 +15,22 @@ export default function DocumentsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
+    console.log('[DOCUMENTS DEBUG] Fetching documents...');
     setLoading(true);
     setError(null);
     try {
+      console.log('[DOCUMENTS DEBUG] Calling apiClient.listDocuments() and getStats()...');
       const [docsResponse, statsResponse] = await Promise.all([
         apiClient.listDocuments(),
         apiClient.getStats(),
       ]);
+      console.log('[DOCUMENTS DEBUG] Documents response:', docsResponse);
+      console.log('[DOCUMENTS DEBUG] Stats response:', statsResponse);
       setDocuments(docsResponse.documents);
       setStats(statsResponse);
+      console.log('[DOCUMENTS DEBUG] Set documents count:', docsResponse.documents.length);
     } catch (err) {
+      console.error('[DOCUMENTS DEBUG] Error fetching documents:', err);
       setError(err instanceof Error ? err.message : 'Failed to load documents');
     } finally {
       setLoading(false);

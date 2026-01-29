@@ -10,6 +10,12 @@ if (typeof window === 'undefined' && !process.env.NEXT_PUBLIC_API_URL) {
   );
 }
 
+// Log API URL in browser for debugging
+if (typeof window !== 'undefined') {
+  console.log('[API DEBUG] API_URL configured as:', API_URL);
+  console.log('[API DEBUG] NEXT_PUBLIC_API_URL env var:', process.env.NEXT_PUBLIC_API_URL);
+}
+
 export interface ChatRequest {
   message: string;
   conversation_id?: string;
@@ -108,23 +114,51 @@ class ApiClient {
   }
 
   async uploadDocument(file: File): Promise<UploadResponse> {
+    console.log('[API DEBUG] uploadDocument called');
+    console.log('[API DEBUG] Base URL:', this.baseUrl);
+    console.log('[API DEBUG] File:', file.name, file.size, file.type);
+    
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await this.fetchWithTimeout(
-      `${this.baseUrl}/api/upload/document`,
-      {
-        method: 'POST',
-        body: formData,
+    const url = `${this.baseUrl}/api/upload/document`;
+    console.log('[API DEBUG] Request URL:', url);
+
+    try {
+      const response = await this.fetchWithTimeout(
+        url,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      console.log('[API DEBUG] Response status:', response.status);
+      console.log('[API DEBUG] Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[API DEBUG] Error response:', errorText);
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { detail: errorText || 'Unknown error' };
+        }
+        throw new Error(error.detail || `HTTP error! status: ${response.status}`);
       }
-    );
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      console.log('[API DEBUG] Success response:', data);
+      return data;
+    } catch (error) {
+      console.error('[API DEBUG] Exception caught:', error);
+      if (error instanceof Error) {
+        console.error('[API DEBUG] Error message:', error.message);
+        console.error('[API DEBUG] Error stack:', error.stack);
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   async listDocuments(): Promise<DocumentsListResponse> {

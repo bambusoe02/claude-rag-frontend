@@ -56,11 +56,14 @@ export default function UploadPage() {
   );
 
   const handleFile = async (file: File) => {
+    console.log('[UPLOAD DEBUG] 1. Upload started:', file.name, 'Size:', file.size, 'Type:', file.type);
+    
     const isValidType =
       ALLOWED_MIME_TYPES.includes(file.type) ||
       ALLOWED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
 
     if (!isValidType) {
+      console.error('[UPLOAD DEBUG] Invalid file type');
       setUploadStatus({
         type: 'error',
         message: `Invalid file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ').toUpperCase()}`,
@@ -69,6 +72,7 @@ export default function UploadPage() {
     }
 
     if (file.size > MAX_FILE_SIZE) {
+      console.error('[UPLOAD DEBUG] File too large:', file.size);
       setUploadStatus({
         type: 'error',
         message: `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`,
@@ -80,7 +84,9 @@ export default function UploadPage() {
     setUploadStatus({ type: null, message: '' });
 
     try {
+      console.log('[UPLOAD DEBUG] 2. Calling apiClient.uploadDocument...');
       const response = await apiClient.uploadDocument(file);
+      console.log('[UPLOAD DEBUG] 3. Upload success! Response:', response);
       setUploadStatus({
         type: 'success',
         message: `Successfully uploaded ${response.filename}. Created ${response.chunks} chunks.`,
@@ -90,6 +96,7 @@ export default function UploadPage() {
         setUploadStatus({ type: null, message: '' });
       }, UPLOAD_STATUS_TIMEOUT);
     } catch (error) {
+      console.error('[UPLOAD DEBUG] 4. Upload error:', error);
       setUploadStatus({
         type: 'error',
         message: error instanceof Error ? error.message : 'Upload failed',
