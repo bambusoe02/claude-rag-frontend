@@ -1,8 +1,27 @@
 import { retryWithBackoff } from './retry';
 import { API_TIMEOUT, API_MAX_RETRIES } from '@/constants';
 
-// Validate environment variable
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Validate and normalize environment variable
+function normalizeApiUrl(url: string | undefined): string {
+  const defaultUrl = 'http://localhost:8000';
+  
+  if (!url) {
+    return defaultUrl;
+  }
+  
+  // Remove trailing slashes
+  url = url.trim().replace(/\/+$/, '');
+  
+  // If URL doesn't start with http:// or https://, add https://
+  if (!url.match(/^https?:\/\//)) {
+    console.warn('[API DEBUG] API URL missing protocol, adding https://');
+    url = `https://${url}`;
+  }
+  
+  return url;
+}
+
+const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL);
 
 if (typeof window === 'undefined' && !process.env.NEXT_PUBLIC_API_URL) {
   console.warn(
@@ -14,6 +33,7 @@ if (typeof window === 'undefined' && !process.env.NEXT_PUBLIC_API_URL) {
 if (typeof window !== 'undefined') {
   console.log('[API DEBUG] API_URL configured as:', API_URL);
   console.log('[API DEBUG] NEXT_PUBLIC_API_URL env var:', process.env.NEXT_PUBLIC_API_URL);
+  console.log('[API DEBUG] Normalized API_URL:', API_URL);
 }
 
 export interface ChatRequest {
