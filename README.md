@@ -1,5 +1,11 @@
 # Claude RAG Frontend
 
+[![CI](https://github.com/bambusoe02/claude-rag-frontend/workflows/CI/badge.svg)](https://github.com/bambusoe02/claude-rag-frontend/actions)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
 Modern Next.js frontend for the Claude RAG Chatbot.
 
 ## Features
@@ -72,3 +78,11 @@ npm start
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 🔑 Keywords
+
+**Next.js 15**, **React 19**, **TypeScript**, **Tailwind CSS**, **shadcn/ui**, **RAG frontend**, **Claude Sonnet 4**, **production-ready**, **Vercel**, **real-time chat**, **document upload**, **source citations**, **responsive design**, **dark mode**, **App Router**, **modern UI**
